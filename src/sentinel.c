@@ -3033,6 +3033,16 @@ void sentinelSendPeriodicCommands(sentinelValkeyInstance *ri) {
         info_period = sentinel_info_period;
     }
 
+    /* During coordinated failover, aggressively poll the promoted replica
+     * while waiting for it to assume the primary role. The server-side
+     * FAILOVER TO command completes in milliseconds; detect it quickly. */
+    if ((ri->flags & (SRI_REPLICA | SRI_PROMOTED)) == (SRI_REPLICA | SRI_PROMOTED) &&
+        (ri->primary->flags & (SRI_FAILOVER_IN_PROGRESS | SRI_COORD_FAILOVER)) ==
+            (SRI_FAILOVER_IN_PROGRESS | SRI_COORD_FAILOVER) &&
+        ri->primary->failover_state == SENTINEL_FAILOVER_STATE_WAIT_PROMOTION) {
+        info_period = 100;
+    }
+
     /* We ping instances every time the last received pong is older than
      * the configured 'down-after-milliseconds' time, but every second
      * anyway if 'down-after-milliseconds' is greater than 1 second. */
@@ -5127,6 +5137,10 @@ void sentinelFailoverSendFailover(sentinelValkeyInstance *ri) {
                   ri->promoted_replica, "%@");
     ri->failover_state = SENTINEL_FAILOVER_STATE_WAIT_PROMOTION;
     ri->failover_state_change_time = mstime();
+    /* Force an immediate INFO poll on the promoted replica so we detect
+     * the role change as soon as possible. Without this, we wait for the
+     * remainder of the current poll cycle before sending the first INFO. */
+    ri->promoted_replica->info_refresh = 0;
 }
 
 

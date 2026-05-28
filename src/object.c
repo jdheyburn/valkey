@@ -1469,6 +1469,20 @@ struct serverMemOverhead *getMemoryOverheadData(void) {
     mh->dataset = zmalloc_used - mem_total;
     mh->peak_perc = (float)zmalloc_used * 100 / mh->peak_allocated;
 
+    /* Compute the memory not counted for eviction (AOF buffer + excess
+     * replication buffer beyond repl_backlog_size), then derive the effective
+     * dataset capacity: how much of maxmemory remains available for dataset
+     * growth once all counted overhead is accounted for.  When maxmemory is
+     * 0 (unlimited) the capacity is reported as 0 to indicate no constraint. */
+    mh->not_counted = freeMemoryGetNotCountedMemory();
+    if (server.maxmemory) {
+        size_t mem_counted = (zmalloc_used > mh->not_counted) ? zmalloc_used - mh->not_counted : 0;
+        size_t non_dataset = (mem_counted > mh->dataset) ? mem_counted - mh->dataset : 0;
+        mh->maxmemory_dataset_capacity = (server.maxmemory > non_dataset) ? server.maxmemory - non_dataset : 0;
+    } else {
+        mh->maxmemory_dataset_capacity = 0;
+    }
+
     /* Metrics computed after subtracting the startup memory from
      * the total memory. */
     size_t net_usage = 1;

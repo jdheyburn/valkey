@@ -6348,6 +6348,7 @@ sds genValkeyInfoString(dict *section_dict, int all_sections, int everything) {
                 "maxmemory:%lld\r\n", server.maxmemory,
                 "maxmemory_human:%s\r\n", maxmemory_hmem,
                 "maxmemory_policy:%s\r\n", evict_policy,
+                "maxmemory_dataset_capacity:%zu\r\n", mh->maxmemory_dataset_capacity,
                 "allocator_frag_ratio:%.2f\r\n", mh->allocator_frag,
                 "allocator_frag_bytes:%zu\r\n", mh->allocator_frag_bytes,
                 "allocator_rss_ratio:%.2f\r\n", mh->allocator_rss,
@@ -6360,7 +6361,7 @@ sds genValkeyInfoString(dict *section_dict, int all_sections, int everything) {
                  * compatibility. */
                 "mem_fragmentation_ratio:%.2f\r\n", mh->total_frag,
                 "mem_fragmentation_bytes:%zd\r\n", mh->total_frag_bytes,
-                "mem_not_counted_for_evict:%zu\r\n", freeMemoryGetNotCountedMemory(),
+                "mem_not_counted_for_evict:%zu\r\n", mh->not_counted,
                 "mem_replication_backlog:%zu\r\n", mh->repl_backlog,
                 "mem_total_replication_buffers:%zu\r\n", server.repl_buffer_mem + server.pending_repl_data.mem,
                 "mem_replicas_repl_buffer:%zu\r\n", server.pending_repl_data.mem,

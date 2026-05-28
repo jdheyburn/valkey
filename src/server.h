@@ -1566,6 +1566,8 @@ struct serverMemOverhead {
     size_t functions_caches;
     size_t overhead_total;
     size_t dataset;
+    size_t not_counted;
+    size_t maxmemory_dataset_capacity;
     size_t total_keys;
     size_t bytes_per_key;
     float dataset_perc;
